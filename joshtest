@@ -1,0 +1,72 @@
+import time
+import plasma
+from plasma import plasma2040
+from pimoroni import RGBLED, Button, Analog
+
+NUMLED = 144
+MIDLED = 5
+
+#FRANCISCO! My LED strip is RGBW and yours is RGB so this might not work the same for you.  
+#you may need to delete rgbw = true from the following line and make some other changes to get the same effect. 
+#when you have RGBW, led_stripe.set_rgb takes four variables (RGBW) so to set LED 0 to red would be: led_strip.set_rgb(0, 255, 0, 0, 0)
+
+led_strip = plasma.WS2812(NUMLED, 0, 0, plasma2040.DAT, rgbw = True)
+ 
+button_sw = Button(plasma2040.USER_SW)
+button_a = Button(plasma2040.BUTTON_A)
+button_b = Button(plasma2040.BUTTON_B)
+
+BRIGHTNESS = 0.5
+
+led_strip.start()
+
+def a():
+    total = 75
+    while True:
+        total = total +1
+        for i in range (1,10):
+            adjtotal = total-(i*8)
+            if adjtotal < 255 and adjtotal > 0:
+                led_strip.set_rgb(i, adjtotal, 0, 0)
+                time.sleep(i/5000)
+        if button_sw.read():
+            for i in range (0,10):
+                led_strip.set_rgb(i, 0, 0, 0)
+            break
+        if button_b.read():
+
+            break        
+
+#red strobe
+def b():
+    while True:
+        for i in range (3,7):
+            led_strip.set_rgb(i, 0, 0, 0, 255)
+            led_strip.set_rgb(i+137, 0, 0, 0, 255)
+        time.sleep(0.02)
+        for i in range (3,7):
+            led_strip.set_rgb(i, 0, 0, 0)
+            led_strip.set_rgb(i+137, 0, 0, 0,0)
+        time.sleep(0.05)
+        
+        if button_sw.read():
+            for i in range (0,NUMLED):
+                led_strip.set_rgb(i, 0, 0, 0)
+            break
+        if button_a.read():
+            for i in range (0,NUMLED):
+                led_strip.set_rgb(i, 0, 0, 0)
+            break   
+        
+
+while True:
+    if button_a.read():
+        for i in range (0,NUMLED):
+            led_strip.set_rgb(i, 0, 0, 0)
+        a()
+    if button_b.read():
+        b()
+    if button_sw.read():
+        for i in range (0,NUMLED):
+            led_strip.set_rgb(i, 0, 0, 0)
+
