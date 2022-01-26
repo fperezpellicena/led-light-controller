@@ -1,0 +1,38 @@
+# How many LEDS per lamp
+ledsPerLamp = 67
+
+#my strip is RGBW so I need this line:
+led_strip = plasma.WS2812(NUM_LEDS, 0, 0, plasma2040.DAT, rgbw=True)
+
+def stereoStrobe():
+
+    # Do not increase the number, or the Amps will be too high.
+    brightness = 200
+    
+    global count
+    
+    # Higher number is slower here. 2 is a good value.
+    strobeSpeed = 2
+    
+    # this is necessary because we need to make sure it's an even number
+    strobeSpeed = strobeSpeed*2
+    
+    # Left and right are calculated here:
+    midPoint = 67
+
+    if(count % strobeSpeed == 0):
+        print(str(count) + "count")
+        for i in range(0,midPoint):
+            led_strip.set_rgb(i, brightness, brightness, brightness)
+        for i in range(midPoint, midPoint*2):
+            led_strip.set_rgb(i, 0, 0, 0)            
+            
+    if(count % strobeSpeed == strobeSpeed/2):
+        print(str(count) + "count")
+        for i in range(0,midPoint):
+            led_strip.set_rgb(i, 0, 0, 0)
+        for i in range(midPoint, midPoint*2):
+            led_strip.set_rgb(i, brightness, brightness, brightness)   
+  
+    count = count + 1
+    time.sleep(1.0 / UPDATES)
