@@ -1,0 +1,26 @@
+def greenStars():
+
+    thislist = []
+    brightness = 255
+    for i in range(0,5):
+        thislist.append(randint(0, NUM_LEDS))
+    
+    global count
+    
+    # Higher number is slower here. 2 is a good value.
+    strobeSpeed = 2
+    
+    # this is necessary because we need to make sure it's an even number
+    strobeSpeed = strobeSpeed*2
+
+    if(count % strobeSpeed == 0):
+        print(str(count) + "count")
+        for i in range(0,NUM_LEDS):
+            for x in thislist:
+                if i == x:
+                    led_strip.set_rgb(x, 90, 255, 100)
+                else:
+                    led_strip.set_rgb(i, 0, 0, 0)
+
+    count = count + 1
+    time.sleep(1.0 / UPDATES)
