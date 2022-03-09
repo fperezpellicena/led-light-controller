@@ -1,5 +1,8 @@
 ## How to autorun a program:
-First, make a copy of the program you want to run and rename it as main.py.
+
+Easy method: Use thonny to save the file to the device as main.py, and it will autorun. 
+
+Alternative method: make a copy of the program you want to run and rename it as main.py.
 
 - Step 1: Install rshell (pip3 install rshell)
 - Step 2: Connect to your Pico ( rshell --buffer-size=30 -p /dev/tty.usbmodem0000000000001 -a ) # NOTE: Your /dev/ naming may differ)
