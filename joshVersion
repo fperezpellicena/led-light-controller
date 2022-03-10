@@ -9,38 +9,8 @@ from breakout_ioexpander import BreakoutIOExpander
 sense = Analog(plasma2040.CURRENT_SENSE, plasma2040.ADC_GAIN, plasma2040.SHUNT_RESISTOR)
 
 offset = 1
-lampSize = 67
-# Set how many LEDs you have
-# The power supplys are 6 amps. one lamp at full power consumes 8.04 amps. One LED at full power is 60amps. 
+lampSize = 67 # The power supplys are 6 amps. one lamp at full power consumes 8.04 amps.
 numLeds = lampSize*10
-
-ls = [0,0,0,0,0,0,0,0,0,0,0,0]
-le = [0,0,0,0,0,0,0,0,0,0,0,0]
-
-for i in range(1,11):
-    ls[i]  = lampSize*(i-1)
-    le[i]  = (lampSize*i)-1
-    print("i value: " + str(i))
-    print(ls[i])
-    print(le[i])
-    print(" ")
-
-led_strip = plasma.WS2812(numLeds, 0, 0, plasma2040.DAT, rgbw=True)
-# Start updating the LED strip
-led_strip.start()
-
-led = RGBLED(plasma2040.LED_R, plasma2040.LED_G, plasma2040.LED_B)
-
-# How many times the LEDs will be updated per second
-UPDATES = 60
-
-# I2C config
-PINS_PICO_EXPLORER = {"sda": 20, "scl": 21}
-i2c = PimoroniI2C(**PINS_PICO_EXPLORER)
-ioe = BreakoutIOExpander(i2c, address=0x18)
-for i in range(14):
-    ioe.set_mode(i+1, BreakoutIOExpander.PIN_IN_PU)
-
 buttonpress = 0
 bank = 1
 effect = 0
@@ -49,16 +19,40 @@ effectplaying= 0
 count= 0 
 framerate = 2 #2 is a good default
 
+ls = [0,0,0,0,0,0,0,0,0,0,0,0]
+le = [0,0,0,0,0,0,0,0,0,0,0,0]
+
+for i in range(1,11):
+    ls[i]  = lampSize*(i-1)
+    le[i]  = (lampSize*i)-1 
+    print("i value: " + str(i))
+    print(ls[i])
+    print(le[i])
+    print(" ")
+    
+led_strip = plasma.WS2812(numLeds, 0, 0, plasma2040.DAT, rgbw=True)
+# Start updating the LED strip
+led_strip.start()
+
+led = RGBLED(plasma2040.LED_R, plasma2040.LED_G, plasma2040.LED_B)
+
+# I2C config
+PINS_PICO_EXPLORER = {"sda": 20, "scl": 21}
+i2c = PimoroniI2C(**PINS_PICO_EXPLORER)
+ioe = BreakoutIOExpander(i2c, address=0x18)
+for i in range(14):
+    ioe.set_mode(i+1, BreakoutIOExpander.PIN_IN_PU)
+
+
+
 def nil():
-    for i in range(ls[10], le[10]):
-        led_strip.set_rgb(i, count, 40, 2*count)
-    ignore = True
+    print("josh you ran nil. This is BAD")
+
     
 def stop():
     print("josh you ran stop. This is fine")
     for i in range(numLeds):
-        led_strip.set_rgb(i, 0, 0, 0)
-    ignore = True    
+        led_strip.set_rgb(i, 0, 0, 0) 
 
 def stereostrobe():
     global effectplaying
@@ -110,6 +104,29 @@ def rainbow():
         hue = (float(i) / numLeds)*9
         led_strip.set_hsv(i, hue + offset, 1, 0.3)
 
+
+def rainbowstrobe():
+    global offset
+    offset += 90 / 2000.0
+    tablee = []
+    for i in range(4,numLeds):
+        if math.floor(random.uniform(0,50)) == 0:
+            tablee.insert(i, 1)
+            tablee.insert(i-1, 1)
+            tablee.insert(i-2, 1)
+            tablee.insert(i-3, 1)
+        else:
+            tablee.insert(i, 0)
+    for i in range(numLeds):
+        if tablee[i] == 0:
+            hue = (float(i) / numLeds)*9
+            led_strip.set_hsv(i, hue + offset, 1, 0.3)
+        else:
+            hue = (float(i) / numLeds)*9  
+            led_strip.set_hsv(i, hue + offset, 1, 1)
+
+
+
 effects = [stop,nil,nil,stereostrobe,rainbow,nil,rainbowstrobe,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,]
 
 #effects =
@@ -135,7 +152,7 @@ def haveprint(buttonpress):
     print("Effect Name: " + str(effects[effectplaying]))
     print(" ")
 
-def pincheck():
+def pincheck(): 
     global buttonpress
     global bank
     global effect
@@ -143,27 +160,28 @@ def pincheck():
     global bpm
     global count
     for i in range(1,15):
+        print(str(count) + " " + str(i))
         if (ioe.input(i)) == 0: #button i is down 
             if (buttonpress != i): #this is a new button being pressed. 
                 buttonpress = i
                 
-                if buttonpress <= 4: # buttons 1 to 4 are banks (button 4 is the BPM bank)
+                if buttonpress <= 4: 
                     bank = buttonpress-1
-                    
                     if buttonpress ==4: 
                         bpm = 120
                     haveprint(buttonpress)
                     break
-                    
-                elif buttonpress == 5: # buttons 5 is the dedicated stop button
+                
+                elif buttonpress == 5: 
                     effect = 0
                     effectplaying = 0
                     count = 0
                     for i in range(numLeds):
                         led_strip.set_rgb(i, 0, 0, 0)
                     haveprint(buttonpress)
-                    
-                elif buttonpress >= 6: # buttons 6 - 14 are effects
+                    break
+                
+                elif buttonpress >= 6: 
                     if bank == 3:
                         bpm = 115 + buttonpress
                     else:
@@ -173,12 +191,10 @@ def pincheck():
                         effectplaying = effect
                         count = 0 
                     haveprint(buttonpress)
-                    
-
-                break
+                    break    
 
 while True:
-#    if (count%(30/framerate)) == 0: #this is 30 not 60 because we want to hit each quarter note
+#     if (count%(30/framerate)) == 0: #this is 30 not 60 because we want to hit each quarter note
 #         print("quarter note" + str((count/15)%2) + " bpm: " + str(bpm))
 
     count += 1
