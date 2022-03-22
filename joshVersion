@@ -1,3 +1,4 @@
+#This is the Josh version, designed for the full 14 button controller.
 import time
 import math
 import plasma
@@ -13,9 +14,9 @@ lampSize = 67 # The power supplys are 6 amps. one lamp at full power consumes 8.
 numLeds = lampSize*10
 buttonpress = 0
 bank = 1
-effect = 0
+effect = 4
 bpm = 120
-effectplaying= 0
+effectplaying= 4
 count= 0 
 framerate = 2 #2 is a good default
 
@@ -30,7 +31,7 @@ for i in range(1,11):
     print(le[i])
     print(" ")
     
-led_strip = plasma.WS2812(numLeds, 0, 0, plasma2040.DAT, rgbw=True)
+led_strip = plasma.WS2812(numLeds, 0, 0, plasma2040.DAT)
 # Start updating the LED strip
 led_strip.start()
 
@@ -58,7 +59,6 @@ def stereostrobe():
     global effectplaying
     brightness = 255
     speed = 2
-
     if count%(speed*2) == (speed):
         for i in range(1,5):
             for i in range(ls[i], le[i]):
@@ -76,24 +76,23 @@ def stereostrobe():
                     led_strip.set_rgb(i, brightness, brightness, brightness)
         for i in range(1,5):
             for i in range(ls[i], le[i]):
-                if i%2 == 0:
                     led_strip.set_rgb(i, 0, 0,0)
 
 def stereostrobeone():
     global effectplaying
     brightness = 255
     speed = 2 
-
+    changer = count%2
     if count%(speed*2) == (speed):
         for i in range(1,10,2):
             for i in range(ls[i], le[i]):
                 led_strip.set_rgb(i, 0, 0, 0)
-                led_strip.set_rgb(i+lampSize, brightness, brightness, brightness)
+                led_strip.set_rgb(i+lampSize+changer, brightness, brightness, brightness)
 
     elif count%(speed) == (0):
         for i in range(1,10,2):
             for i in range(ls[i], le[i]):
-                led_strip.set_rgb(i, brightness, brightness, brightness)
+                led_strip.set_rgb(i+changer, brightness, brightness, brightness)
                 led_strip.set_rgb(i+lampSize, 0, 0, 0)
 
 def rainbow():
@@ -102,7 +101,7 @@ def rainbow():
     print(count)
     for i in range(numLeds):
         hue = (float(i) / numLeds)*9
-        led_strip.set_hsv(i, hue + offset, 1, 0.3)
+        led_strip.set_hsv(i, hue + offset, 0.8, 1)
 
 
 def rainbowstrobe():
@@ -120,7 +119,7 @@ def rainbowstrobe():
     for i in range(numLeds):
         if tablee[i] == 0:
             hue = (float(i) / numLeds)*9
-            led_strip.set_hsv(i, hue + offset, 1, 0.3)
+            led_strip.set_hsv(i, hue + offset, 1, 0.5)
         else:
             hue = (float(i) / numLeds)*9  
             led_strip.set_hsv(i, hue + offset, 1, 1)
@@ -160,7 +159,6 @@ def pincheck():
     global bpm
     global count
     for i in range(1,15):
-        print(str(count) + " " + str(i))
         if (ioe.input(i)) == 0: #button i is down 
             if (buttonpress != i): #this is a new button being pressed. 
                 buttonpress = i
@@ -196,11 +194,8 @@ def pincheck():
 while True:
 #     if (count%(30/framerate)) == 0: #this is 30 not 60 because we want to hit each quarter note
 #         print("quarter note" + str((count/15)%2) + " bpm: " + str(bpm))
-
     count += 1
-
     pincheck()
-         
     if effectplaying !=0:
         effects[effectplaying]()
     time.sleep(framerate/bpm) #if this is (2/bpm), then each beat is 30 frames
