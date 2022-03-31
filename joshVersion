@@ -10,7 +10,7 @@ from breakout_ioexpander import BreakoutIOExpander
 sense = Analog(plasma2040.CURRENT_SENSE, plasma2040.ADC_GAIN, plasma2040.SHUNT_RESISTOR)
 
 offset = 1
-lampSize = 67 # The power supplys are 6 amps. one lamp at full power consumes 8.04 amps.
+lampSize = 72 # The power supplys are 6 amps. one lamp at full power consumes 8.04 amps.
 numLeds = lampSize*10
 buttonpress = 0
 bank = 0
@@ -78,7 +78,7 @@ def rainbow():
     offset += 30 / 2000.0
     print(count)
     for i in range(numLeds):
-        hue = (float(i) / numLeds)*9
+        hue = (float(i) / numLeds)*10
         led_strip.set_hsv(i, hue + offset, 1, 1)
 
 
@@ -177,4 +177,5 @@ while True:
     if effectplaying !=0:
         effects[effectplaying]()
     time.sleep(framerate/bpm) #if this is (2/bpm), then each beat is 30 frames
-#     time.sleep(1) 
+#     time.sleep(1) #if this is (2/bpm), then each beat is 30 frames
+
