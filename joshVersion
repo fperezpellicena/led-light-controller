@@ -10,20 +10,22 @@ from breakout_ioexpander import BreakoutIOExpander
 sense = Analog(plasma2040.CURRENT_SENSE, plasma2040.ADC_GAIN, plasma2040.SHUNT_RESISTOR)
 
 offset = 1
+numLamps = 12
 lampSize = 72 # The power supplys are 6 amps. one lamp at full power consumes 8.04 amps.
-numLeds = lampSize*10
+numLeds = lampSize*numLamps
 buttonpress = 0
 bank = 0
-effect = 0
+effect = 4
 bpm = 120
-effectplaying= numLeds*-1
+effectplaying= 4
 count= 0 
 framerate = 2 #2 is a good default
+held = False
 
-ls = [0,0,0,0,0,0,0,0,0,0,0,0]
-le = [0,0,0,0,0,0,0,0,0,0,0,0]
+ls = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+le = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
 
-for i in range(1,11):
+for i in range(1,(numLamps+1)):
     ls[i]  = lampSize*(i-1)
     le[i]  = (lampSize*i)-1 
     print("lamp " + str(i) + "   start: " + str(ls[i]) + "   end: " + str(le[i]))
@@ -42,9 +44,57 @@ ioe = BreakoutIOExpander(i2c, address=0x18)
 for i in range(14):
     ioe.set_mode(i+1, BreakoutIOExpander.PIN_IN_PU)
 
-def nil():
-    fooo = nil
 
+def nil():
+    speed = 12#smaller is faster, 25 is a good default
+    sinetable = [0,0,0, 0,0]
+    wavelength = 5 #longer number is shorter wavelength. try 5
+    thickness = 36
+    wavepeak= 20
+
+    for i in range(5):
+        sine = math.sin((count+(i*wavelength))/speed) #goes between -1 and 1
+        sine = ((sine+1)*wavepeak) #goes between 0 and 36
+        sine = round(sine)
+    #print(sine    table[0], sinetable[1], sinetable[2], sinetable[3], sinetable[4])
+
+        for n in range(thickness):
+            ledNo = ls[(i+1)*2-1]+sine+n
+            if ledNo < le[(i+1)*2-1]:
+                led_strip.set_rgb(ledNo, 255, 100, 70)
+            
+            ledNo = le[(i+1)*2]-sine-n
+            if ledNo > ls[(i+1)*2]:
+                led_strip.set_rgb(ledNo, 255, 100, 70)
+            
+
+        for n in range(1,6):
+            
+            ledNo = ls[(i+1)*2-1]+sine+thickness+n
+            if ledNo <= le[(i+1)*2-1]:
+                led_strip.set_rgb(ledNo, 0, 0, 0)
+                
+            ledNo = ls[(i+1)*2-1]+sine-n
+            if ledNo >= ls[(i+1)*2-1]:
+                led_strip.set_rgb(ledNo, 0, 0, 0)
+            
+            ledNo = le[(i+1)*2]-sine-thickness-n
+            if ledNo >= ls[(i+1)*2]:
+                led_strip.set_rgb(ledNo, 0, 0, 0)
+                
+            ledNo = le[(i+1)*2]-sine+n
+            if ledNo >=ls[(i+1)*2]:
+                led_strip.set_rgb(ledNo, 0, 0, 0)
+
+def bluesine():
+    fooo = nil
+    for i in range(lampSize):
+        sine = math.cos((count+i)) #goes between 0 and 1
+        sine = round(abs(sine), 3)
+        sine = (math.floor(sine*255))
+        foo = i
+        for i in range(numLamps):
+            led_strip.set_rgb(foo + (i*lampSize), 0, 0, sine)
     
 def stop():
     #print("josh you ran stop. This is fine")
@@ -52,10 +102,10 @@ def stop():
         led_strip.set_rgb(i, 0, 0, 0) 
 
                     
-def stereostrobe():
+def whitestrobe():
     brightness = 255
     changer = count%4
-    print(changer)
+    #print(changer)
     if changer%2 == 0:
         
         for i in range(0,numLeds):
@@ -76,12 +126,11 @@ def horizontalrainbow():
     v = min((count/50),1)
     offset += 30 / 2000.0
     for i in range(1,6):
-        print(i)
         hue = (float((i)) / 1000)
         for i in range(ls[(i*2)-1],le[(i*2)]):
             led_strip.set_hsv(i, hue + offset, s, v)
 
-def boxcross():
+def box():
     divider = 50
     if (count%divider) == divider*0: #box
         #print("boom" + str((count/15)%2) + " bpm: " + str(bpm))
@@ -95,8 +144,7 @@ def boxcross():
             foo = i 
             for i in range(7):
                 led_strip.set_rgb((foo+(lampSize*i)), 0, 0, 255)
-  
-            
+       
     if (count%divider) == divider*0.2: 
        # print("clap" + str((count/15)%2) + " bpm: " + str(bpm))
         for i in range(numLeds):
@@ -107,18 +155,77 @@ def boxcross():
         for i in range(ls[5],le[6]):
             led_strip.set_rgb(i, 0, 0, 255)
 
+    if (count%divider) == divider*0.7: 
+       # print("clap" + str((count/15)%2) + " bpm: " + str(bpm))
+        for i in range(numLeds):
+            led_strip.set_rgb(i, 0, 0, 0)
+            
+            
+def cross():
+    divider = 50
+    if (count%divider) == divider*0: #box
+        #print("boom" + str((count/15)%2) + " bpm: " + str(bpm))
+        for i in range(le[2]):
+            led_strip.set_rgb(i, 0, 0, 255)
+        for i in range(ls[9],le[10]):
+            led_strip.set_rgb(i, 0, 0, 255)
+            
+        for i in range(ls[3]-7,(ls[3]+7)):
+            led_strip.set_rgb(i, 0, 0, 255)
+            foo = i 
+            for i in range(7):
+                led_strip.set_rgb((foo+(lampSize*i)), 0, 0, 255)
+       
+    if (count%divider) == divider*0.2: 
+       # print("clap" + str((count/15)%2) + " bpm: " + str(bpm))
+        for i in range(numLeds):
+            led_strip.set_rgb(i, 0, 0, 0)
+
+    if (count%divider) == divider*0.5: #cross
+       # print("boom" + str((count/15)%2) + " bpm: " + str(bpm))
+        for i in range(ls[5],le[6]):
+            led_strip.set_rgb(i, 0, 0, 255)
 
     if (count%divider) == divider*0.7: 
        # print("clap" + str((count/15)%2) + " bpm: " + str(bpm))
         for i in range(numLeds):
             led_strip.set_rgb(i, 0, 0, 0)
             
+def x():
+    divider = 50
+    if (count%divider) == divider*0: #box
+        #print("boom" + str((count/15)%2) + " bpm: " + str(bpm))
+        for i in range(le[2]):
+            led_strip.set_rgb(i, 0, 0, 255)
+        for i in range(ls[9],le[10]):
+            led_strip.set_rgb(i, 0, 0, 255)
+            
+        for i in range(ls[3]-7,(ls[3]+7)):
+            led_strip.set_rgb(i, 0, 0, 255)
+            foo = i 
+            for i in range(7):
+                led_strip.set_rgb((foo+(lampSize*i)), 0, 0, 255)
+       
+    if (count%divider) == divider*0.2: 
+       # print("clap" + str((count/15)%2) + " bpm: " + str(bpm))
+        for i in range(numLeds):
+            led_strip.set_rgb(i, 0, 0, 0)
+
+    if (count%divider) == divider*0.5: #cross
+       # print("boom" + str((count/15)%2) + " bpm: " + str(bpm))
+        for i in range(ls[5],le[6]):
+            led_strip.set_rgb(i, 0, 0, 255)
+
+    if (count%divider) == divider*0.7: 
+       # print("clap" + str((count/15)%2) + " bpm: " + str(bpm))
+        for i in range(numLeds):
+            led_strip.set_rgb(i, 0, 0, 0)
 
 def rainbow(): 
     global offset
     #print(count)
     offset += 30 / 2000.0
-    s = 1
+    s = 0.7
     v = min((count/50),1)
     for i in range(le[1],0,-1):
         hue = (float(i) / numLeds)*15
@@ -164,7 +271,7 @@ def rainbowstrobe():
     brightness = 255
     changer = count%2
     bpm = 100
-    print(changer)
+   # print(changer)
     if changer == 0:
         
         for i in range(0,numLeds):
@@ -178,12 +285,12 @@ def rainbowstrobe():
 def throb():
     global count
     count = round(count+6)
-    print(" ")
-    print("step:" + str(count))
+    #print(" ")
+    #print("step:" + str(count))
     g = 0
     b = 0
     for i in range(min(count, lampSize/2)):
-        
+
         delay = 100 #time to full brightness. Higher is slower. Default 50. 
         calc = int(255*(max((count-i)/delay, 0)))
         limit  = min(255, calc)
@@ -192,7 +299,6 @@ def throb():
         led_strip.set_rgb(start+lampSize+i, limit, g, b)
         led_strip.set_rgb(start-i, limit, g, b)
         led_strip.set_rgb(start+lampSize-i, limit, g, b)
-        
         
         delay = 150 #time to full brightness. Higher is slower. Default 50. 
         calc = int(255*(max((count-(i*1.5))/delay, 0)))
@@ -226,8 +332,7 @@ def redpoles():
     global count
     brightness = 255
     changer = count%5
-    bpm = 100
-    print(changer)
+    #print(changer)
     if changer == 0: #turn off
         for i in range(le[4]):
             led_strip.set_rgb(i, 0, 0, 0)
@@ -240,7 +345,7 @@ def redpoles():
             led_strip.set_rgb(i, 0, 0, 0)
         for i in range(ls[3],le[4]):
             led_strip.set_rgb(i, 255, 0, 0)
-        for i in range(ls[5],le[10]):
+        for i in range(ls[5],le[numLamps]):
             led_strip.set_rgb(i, 0, 0, 0)
             
     elif changer == 2:
@@ -248,10 +353,9 @@ def redpoles():
             led_strip.set_rgb(i, 0, 0, 0)
         for i in range(ls[7],le[8]):
             led_strip.set_rgb(i, 255, 0, 0)
-        for i in range(ls[9],le[10]):
+        for i in range(ls[9],le[numLamps]):
             led_strip.set_rgb(i, 0, 0, 0)
  
-
     elif changer == 3:
         for i in range(le[2]):
             led_strip.set_rgb(i, 255, 0, 0)
@@ -261,7 +365,7 @@ def redpoles():
     elif changer == 4: 
         for i in range(le[8]):
             led_strip.set_rgb(i, 0, 0, 0)
-        for i in range(ls[9],le[10]):
+        for i in range(ls[9],le[numLamps]):
             led_strip.set_rgb(i, 255, 0, 0)
 
     
@@ -270,13 +374,13 @@ def redstrobe():
     brightness = 255
     changer = count%4
     bpm = 100
-    print(changer)
+    #print(changer)
     if changer == 0: #turn off
         for i in range(numLeds):
             led_strip.set_rgb(i, 0, 0, 0)
 
     elif changer == 1: #bottom half
-        for i in range(10):
+        for i in range(numLamps):
             for n in range(lampSize/2):
                 led_strip.set_rgb(n+(lampSize*i), 255, 0, 0)
                 
@@ -285,12 +389,38 @@ def redstrobe():
             led_strip.set_rgb(i, 0, 0, 0)
 
     elif changer == 3: #bottom half
-        for i in range(10):
+        for i in range(numLamps):
             for n in range(lampSize/2, lampSize):
                 led_strip.set_rgb(int(n+(lampSize*i)), 255, 0, 0)
     
-    
-effects = [stop,boxcross,nil,stereostrobe,rainbow,rainbowdynamic,rainbowstrobe,throb,redpoles,redstrobe,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,]
+
+
+
+
+
+
+
+
+slider = []
+length = 5 #small number, longer tail. This is the amount subtracted from the brightness of each led behind the first one each count. 
+for i in range(lampSize):
+    slider.insert(i, 0)
+
+def greensliders():
+    global count
+    for i in range(len(slider)):
+        difference = abs((count)-i)*length
+        slider[i] = 255-difference
+        foo = i
+        for i in range(0,numLamps,2):
+            brightness = slider[foo]
+            half = max(0,math.ceil((slider[foo])/2))
+            led_strip.set_rgb((lampSize-foo)+((lampSize*i)), half, slider[foo], half)
+        for i in range(1,numLamps,2):
+            led_strip.set_rgb((foo)+((lampSize*i)), half, slider[foo], half)
+
+
+effects = [stop,box,cross,x,rainbow,rainbowdynamic,rainbowstrobe,throb,redpoles,redstrobe,bluesine,whitestrobe,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,]
 
 #effects =
 #[
@@ -315,13 +445,17 @@ def haveprint(buttonpress):
     print("Effect Name: " + str(effects[effectplaying]))
     print(" ")
 
-def pincheck(): 
+def pincheck():
+    global held
     global buttonpress
     global bank
     global effect
     global effectplaying
     global bpm
     global count
+    if buttonpress != 0:
+        if (ioe.input(buttonpress)) != 0:#button i is up
+            held = False
     for i in range(1,15):
         if (ioe.input(i)) == 0: #button i is down
             if (buttonpress != i): #this is a new button being pressed. 
@@ -342,7 +476,9 @@ def pincheck():
                     haveprint(buttonpress)
                     break
                 
-                elif buttonpress >= 6: 
+                elif buttonpress >= 6:
+                    held = True
+                    print("pressed")
                     if bank == 3:
                         bpm = 115 + buttonpress
                     else:
@@ -352,8 +488,12 @@ def pincheck():
                         effectplaying = effect
                         count = 0 
                     haveprint(buttonpress)
-                    break    
-
+                    break  
+            elif buttonpress >= 6 and not held:
+                held = True
+                print("reset")
+                stop()
+                count = 0 
 while True:
     count += 1
     pincheck()
@@ -362,3 +502,4 @@ while True:
     elif effectplaying < 0:
         led_strip.set_rgb(min(count,numLeds), 50, 150, 50) 
     time.sleep(bpm/60/100) #each
+
