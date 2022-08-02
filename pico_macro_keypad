@@ -1,0 +1,29 @@
+import time
+import digitalio
+import board
+import usb_hid
+from adafruit_hid.keyboard import Keyboard
+from adafruit_hid.keycode import Keycode
+
+keyboard = Keyboard(usb_hid.devices)
+
+keycodetable = [Keycode.SPACE, Keycode.ONE, Keycode.TWO, Keycode.THREE, Keycode.FOUR, Keycode.FIVE, Keycode.SIX, Keycode.SEVEN, Keycode.EIGHT,Keycode.NINE, Keycode.ZERO, Keycode.A, Keycode.B, Keycode.C, Keycode.D, Keycode.E, Keycode.F, Keycode.G, Keycode.H, Keycode.I,Keycode.J,Keycode.K,Keycode.L]
+GPs = [board.GP0,board.GP1,board.GP2,board.GP3,board.GP4, board.GP5,board.GP6,board.GP7,board.GP8,board.GP9, board.GP10,board.GP11,board.GP12,board.GP13,board.GP14, board.GP15,board.GP16,board.GP17,board.GP18,board.GP19, board.GP20,board.GP21,board.GP22]
+buttonpressed = []
+btns = []
+
+for i in range(23):
+    btns.append(digitalio.DigitalInOut(GPs[i]))
+    btns[i].direction = digitalio.Direction.INPUT
+    btns[i].pull = digitalio.Pull.UP
+    buttonpressed.append(False)
+
+while True:
+    for i in range(23):
+        if not btns[i].value:
+            if not buttonpressed[i]:
+                buttonpressed[i] = True
+                keyboard.press(keycodetable[i])
+                keyboard.release(keycodetable[i])
+        else:
+            buttonpressed[i] = False
