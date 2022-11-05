@@ -5,7 +5,7 @@
 
 
 #
-
+#This is the Josh version, designed for the full 14 button controller.
 import time 
 import math 
 import plasma 
@@ -719,4 +719,3 @@ while True:
     pincheck()
     effects[pattern+strobe]()
     #print("Shift :", shift, "      Pattern:", pattern+strobe, "      Colour:", colour, "      Count:", count, "      Brightness:", brightness, "      lastpressed:", lastpressed)
-
