@@ -18,9 +18,9 @@ sense = Analog(plasma2040.CURRENT_SENSE, plasma2040.ADC_GAIN, plasma2040.SHUNT_R
 
 
 numleds = 144*5
-led_strip = plasma.WS2812(numleds, 0, 0, plasma2040.DAT)
+led_strip = plasma.WS2812(numleds+5, 0, 0, plasma2040.DAT)
 led_strip.start()
-numLamps = 12
+numLamps = 10
 lampSize = 72
 
 ls = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
@@ -67,41 +67,28 @@ def stop():
 def a():
     global count
     time.sleep(0.02)
+    if count == 0:
+        print("starty")
+        for n in range(0,5):
+            lamp = (n*144)
+            for i in range (0,2):
+                led_strip.set_rgb(lamp+i, 0,0,0)
+            
     count = count+6
     g = 0
     b = 0
+
     for i in range(min(count, lampSize/2)):
         delay = 20 #time to full brightness. Higher is slower. Default 50. 
         calc = int(255*(max((count-i)/delay, 0)))
-        limit = min(255, calc)
-        start = (int(lampSize*4.5))
-        led_strip.set_rgb(start+i, 255-limit, g, b)
-        led_strip.set_rgb(start+lampSize+i, 255-limit, g, b)
-        led_strip.set_rgb(start-i, 255-limit, g, b)
-        led_strip.set_rgb(start+lampSize-i, 255-limit, g, b)
-        calc = int(255*(max((count-(i*1.5))/delay, 0)))
-        start = (int(lampSize*2.5))
-        led_strip.set_rgb(start+i, 255-limit, g, b)
-        led_strip.set_rgb(start+lampSize+i, 255-limit, g, b)
-        led_strip.set_rgb(start-i, 255-limit, g, b)
-        led_strip.set_rgb(start+lampSize-i, 255-limit, g, b)
-        start = (int(lampSize*6.5))
-        led_strip.set_rgb(start+i, 255-limit, g, b)
-        led_strip.set_rgb(start+lampSize+i, 255-limit, g, b)
-        led_strip.set_rgb(start-i, 255-limit, g, b)
-        led_strip.set_rgb(start+lampSize-i, 255-limit, g, b)
-        calc = int(255*(max((count-(i*2))/delay, 0)))
+        limit = min(255, calc)        
         start = (int(lampSize*0.5))
-        led_strip.set_rgb(start+i, 255-limit, g, b)
-        led_strip.set_rgb(start+lampSize+i, 255-limit, g, b)
-        led_strip.set_rgb(start-i, 255-limit, g, b)
-        led_strip.set_rgb(start+lampSize-i, 255-limit, g, b)
-        start = (int(lampSize*8.5))
-        led_strip.set_rgb(start+i, 255-limit, g, b)
-        led_strip.set_rgb(start+lampSize+i, 255-limit, g, b)
-        led_strip.set_rgb(start-i, 255-limit, g, b)
-        led_strip.set_rgb(start+lampSize-i, 255-limit, g, b)
-
+        for n in range(0,5):
+            lamp = (n*144)
+            led_strip.set_rgb(start+i+lamp, 255-limit, g, b)
+            led_strip.set_rgb(start+lampSize+i+lamp, 255-limit, g, b)
+            led_strip.set_rgb(start-i+lamp, 255-limit, g, b)
+            led_strip.set_rgb(start+lampSize-i+lamp, 255-limit, g, b)
 
 
 
@@ -185,42 +172,48 @@ be = 612-36
 def b():
     global count
     count += 1
-    time.sleep(0.02)
-    speed = 20#smaller is faster, 25 is a good default
+    time.sleep(0.01)
+    
+    speed = 12#smaller is faster, 25 is a good default
+    sinetable = [0,0,0, 0,0]
     wavelength = 5 #longer number is shorter wavelength. try 5
-    thickness = 20
-    wavepeak= 25
-    R = 255
-    G = 100
-    B = 70 
-    for i in range(5): #works with 4
+    thickness = 36
+    wavepeak= 20
+
+    for i in range(5):
         sine = math.sin((count+(i*wavelength))/speed) #goes between -1 and 1
         sine = ((sine+1)*wavepeak) #goes between 0 and 36
         sine = round(sine)
+    #print(sine    table[0], sinetable[1], sinetable[2], sinetable[3], sinetable[4])
 
         for n in range(thickness):
             ledNo = ls[(i+1)*2-1]+sine+n
             if ledNo < le[(i+1)*2-1]:
-                led_strip.set_rgb(ledNo, R, G, B)
-
+                led_strip.set_rgb(ledNo, 255, 100, 70)
+            
             ledNo = le[(i+1)*2]-sine-n
             if ledNo > ls[(i+1)*2]:
-                led_strip.set_rgb(ledNo, R, G, B)
+                led_strip.set_rgb(ledNo, 255, 100, 70)
+            
 
-            for n in range(1,3):
-                ledNo = ls[(i+1)*2-1]+sine+thickness+n
-                if ledNo <= le[(i+1)*2-1]:
-                    led_strip.set_rgb(ledNo, 0, 0, 0)
-                ledNo = ls[(i+1)*2-1]+sine-n
-                if ledNo >= ls[(i+1)*2-1]:
-                    led_strip.set_rgb(ledNo, 0, 0, 0)
-                ledNo = le[(i+1)*2]-sine-thickness-n
-                if ledNo >= ls[(i+1)*2]:
-                    led_strip.set_rgb(ledNo, 0, 0, 0)
+        for n in range(1,6):
+            
+            ledNo = ls[(i+1)*2-1]+sine+thickness+n
+            if ledNo <= le[(i+1)*2-1]:
+                led_strip.set_rgb(ledNo, 0, 0, 0)
+                
+            ledNo = ls[(i+1)*2-1]+sine-n
+            if ledNo >= ls[(i+1)*2-1]:
+                led_strip.set_rgb(ledNo, 0, 0, 0)
+            
+            ledNo = le[(i+1)*2]-sine-thickness-n
+            if ledNo >= ls[(i+1)*2]:
+                led_strip.set_rgb(ledNo, 0, 0, 0)
+                
+            ledNo = le[(i+1)*2]-sine+n
+            if ledNo >=ls[(i+1)*2]:
+                led_strip.set_rgb(ledNo, 0, 0, 0)
 
-                ledNo = le[(i+1)*2]-sine+n
-                if ledNo >=ls[(i+1)*2]:
-                    led_strip.set_rgb(ledNo, 0, 0, 0)
 
 
 
@@ -228,44 +221,7 @@ def b():
 def bloop():
     global count
     count += 1
-    time.sleep(0.02)
-    speed = 20#smaller is faster, 25 is a good default
-    wavelength = 5 #longer number is shorter wavelength. try 5
-    thickness = 20
-    wavepeak= 25
-    R = 255
-    G = 100
-    B = 70 
-    for i in range(5): #works with 4
-        sine = math.sin((count+(i*wavelength))/speed) #goes between -1 and 1
-        sine = ((sine+1)*wavepeak) #goes between 0 and 36
-        sine = round(sine)
-
-        for n in range(thickness):
-            ledNo = ls[(i+1)*2-1]+sine+n
-            if ledNo < le[(i+1)*2-1]:
-                led_strip.set_rgb(ledNo, R, G, B)
-
-            ledNo = le[(i+1)*2]-sine-n
-            if ledNo > ls[(i+1)*2]:
-                led_strip.set_rgb(ledNo, R, G, B)
-
-            for n in range(1,3):
-                ledNo = ls[(i+1)*2-1]+sine+thickness+n
-                if ledNo <= le[(i+1)*2-1]:
-                    led_strip.set_rgb(ledNo, 0, 0, 0)
-                ledNo = ls[(i+1)*2-1]+sine-n
-                if ledNo >= ls[(i+1)*2-1]:
-                    led_strip.set_rgb(ledNo, 0, 0, 0)
-                ledNo = le[(i+1)*2]-sine-thickness-n
-                if ledNo >= ls[(i+1)*2]:
-                    led_strip.set_rgb(ledNo, 0, 0, 0)
-
-                ledNo = le[(i+1)*2]-sine+n
-                if ledNo >=ls[(i+1)*2]:
-                    led_strip.set_rgb(ledNo, 0, 0, 0)
-
-
+    time.sleep(0.01)
 
 
 
@@ -347,44 +303,18 @@ def cloop():
 
 
 def c():
-    global count
-    count = count+1
-    for i in range(72):
-        hue = (i + (count*2))/ 144
-        led_strip.set_hsv(i, hue, 0.8, 0.4)
-        led_strip.set_hsv(144-i, hue, 0.8, 0.4)
-        led_strip.set_hsv(i+144, hue, 0.8, 0.4)
-        led_strip.set_hsv(144-i+144, hue, 0.8, 0.4)
-        led_strip.set_hsv(i+288, hue, 0.8, 0.4)
-        led_strip.set_hsv(144-i+288, hue, 0.8, 0.4)
-        led_strip.set_hsv(i+432, hue, 0.8, 0.4)
-        led_strip.set_hsv(144-i+432, hue, 0.8, 0.4)
-        led_strip.set_hsv(i+576, hue, 0.8, 0.4)
-        led_strip.set_hsv(144-i+576, hue, 0.8, 0.4)
+    print(c)
 
 #####################################################################################################################################################################
 
 def d():
     global count
     count += 1
-    for i in range(36):
-        sine = (math.cos((i*0.2)+(count/10)))
-        sine = 255-(math.floor(abs(sine)*255))
-        minisine = math.floor(sine/5)
-        for n in range(0,577,288):
-            positive = i+(n)
-            negative = 71-i+(n)
-            led_strip.set_rgb(positive, minisine,sine,minisine) #frontbottom
-            led_strip.set_rgb(negative, minisine,sine,minisine) #fronttop
-            led_strip.set_rgb(positive+72, minisine,sine,minisine) #back
-            led_strip.set_rgb(negative+72, minisine,sine,minisine) #back
-        for n in range(144,433,288):
-            positive = i+(n)+36
-            led_strip.set_rgb(positive, minisine,sine,minisine) #frontbottom
-            led_strip.set_rgb(positive+72, minisine,sine,minisine) #back
-            negative = 35-i+(n)
-            led_strip.set_rgb(negative+72, minisine,sine,minisine) #back
-            led_strip.set_rgb(negative, minisine,sine,minisine) #back
+    br = max(0, 255-(count*count))
+    brg = math.floor(br*0.2)
+    for i in range(720):
+        led_strip.set_rgb(i, brg,br,brg) #frontbottom
+
             
 def dstrobe():
     global count
@@ -475,6 +405,11 @@ eb = 255
 
 def e():
     global count
+    print(count)
+    if count == 1:
+        print("starty")
+        for n in range(0,720):
+            led_strip.set_rgb(n, 0,0,0)
     if count <72:
         count +=1
     for i in range(5):
@@ -585,15 +520,100 @@ def gstrobe():
     print("pattern", pattern)
 
 #####################################################################################################################################################################
-
+    
+stops = 1
 def h():
-    print("pattern", pattern)
+    global count
+    global stops
+    count = count+1
+    time.sleep(0.02)
+    if count == 1:
+        stops = stops+1
+        stop()
+    brightness = 255
+    changer = count%4
+    lestops = (stops%2)*432
+    if changer == 1: #bottom half
+        for i in range(432-lestops,468-lestops):
+            led_strip.set_rgb(i, 255, 255, 255)
+            led_strip.set_rgb(i+144, 255, 255, 255)
+        for i in range(540-lestops,576-lestops):
+            led_strip.set_rgb(i, 255, 255, 255)
+            led_strip.set_rgb(i+144, 255, 255, 255)
+                
+    elif changer == 2: #turn off
+        for i in range(432-lestops,504-lestops):
+            led_strip.set_rgb(i, 0, 0, 0)
+            led_strip.set_rgb(i+144, 0,0,0)
+        for i in range(540-lestops,576-lestops):
+            led_strip.set_rgb(i, 0,0,0)
+            led_strip.set_rgb(i+144, 0,0,0)
+
+    elif changer == 3: #bottom half
+        for i in range(468-lestops,540-lestops):
+            led_strip.set_rgb(i, 255, 255, 255)
+            led_strip.set_rgb(i+144, 255, 255, 255)
+
+    elif changer == 0: #turn off
+        for i in range(432-lestops,577-lestops):
+            led_strip.set_rgb(i, 0, 0, 0)
+            led_strip.set_rgb(i+144, 0,0,0)
+        for i in range(468-lestops,504-lestops):
+            led_strip.set_rgb(i, 0,0,0)
+            led_strip.set_rgb(i+144, 0,0,0)
+
 
 def hloop():
-    print("pattern", pattern)
+    global count
+    count = count+1
+    time.sleep(0.02)
+    brightness = 255
+    changer = count%4
+    #print(changer)
+    if changer == 0: #turn off
+        for i in range(720):
+            led_strip.set_rgb(i, 0, 0, 0)
+
+    elif changer == 1: #bottom half
+        for i in range(numLamps):
+            for n in range(lampSize/2):
+                led_strip.set_rgb(n+(lampSize*i), 255, 255, 255)
+                
+    elif changer == 2: #turn off
+        for i in range(720):
+            led_strip.set_rgb(i, 0, 0, 0)
+
+    elif changer == 3: #bottom half
+        for i in range(numLamps):
+            for n in range(lampSize/2, lampSize):
+                led_strip.set_rgb(int(n+(lampSize*i)), 255, 255, 255)
+ 
 
 def hstrobe():
-    print("pattern", pattern)
+    global count
+    count = count+1
+    time.sleep(0.02)
+    brightness = 255
+    changer = count%4
+    #print(changer)
+    if changer == 0: #turn off
+        for i in range(720):
+            led_strip.set_rgb(i, 0, 0, 0)
+
+    elif changer == 1: #bottom half
+        for i in range(numLamps):
+            for n in range(lampSize/2):
+                led_strip.set_rgb(n+(lampSize*i), 255, 255, 255)
+                
+    elif changer == 2: #turn off
+        for i in range(720):
+            led_strip.set_rgb(i, 0, 0, 0)
+
+    elif changer == 3: #bottom half
+        for i in range(numLamps):
+            for n in range(lampSize/2, lampSize):
+                led_strip.set_rgb(int(n+(lampSize*i)), 255, 255, 255)
+ 
 
 #####################################################################################################################################################################
 
@@ -689,7 +709,7 @@ def pincheck():
     else:
         shift = False
 
-    #STOP        
+    #STOP        
     if (ioe.input(11)) == 0:
         if not shift:
             pattern = 0
@@ -718,4 +738,4 @@ def pincheck():
 while True:
     pincheck()
     effects[pattern+strobe]()
-    #print("Shift :", shift, "      Pattern:", pattern+strobe, "      Colour:", colour, "      Count:", count, "      Brightness:", brightness, "      lastpressed:", lastpressed)
+    #print("Shift :", shift, "      Pattern:", pattern+strobe, "      Colour:", colour, "      Count:", count, "      Brightness:", brightness, "      lastpressed:", lastpressed)
