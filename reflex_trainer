@@ -1,0 +1,274 @@
+import board
+import neopixel
+import board
+import digitalio
+import usb_hid
+import math
+import time
+import random
+from adafruit_hid.keyboard import Keyboard
+from adafruit_hid.keyboard_layout_us import KeyboardLayoutUS
+from adafruit_hid.keycode import Keycode
+
+
+# Initialize the HID, Neopixels, and buttons
+pixel_pin = board.GP14
+keycode = KeyboardLayoutUS(Keyboard(usb_hid.devices))
+num_pixels = 144
+light = neopixel.NeoPixel(pixel_pin, num_pixels, brightness=1, auto_write=False)
+
+# Define the GPIO pins connected to the buttons
+button_pins = [board.GP0, board.GP1, board.GP2, board.GP3, board.GP4, board.GP5, board.GP6, board.GP7, board.GP8, board.GP9, board.GP10, board.GP11, board.GP12, board.GP13]
+
+# Create an array to hold the button objects
+buttons = []
+previous_states = []
+
+def no_buttons_pressed():
+    for button in buttons:
+        if not button.value:
+            return False
+    return True
+
+# Initialize the button objects and configure them as inputs
+for pin in button_pins:
+    button = digitalio.DigitalInOut(pin)
+    button.direction = digitalio.Direction.INPUT
+    button.pull = digitalio.Pull.UP
+    buttons.append(button)
+    previous_states.append(button.value)
+    
+    
+state = 0
+
+
+number_of_buttons = 6
+speed = 0.01 #(this is the speed of the countdown after a stimuli is presented). Higher is faster. 0.1 is slow. 
+
+timer = 0
+
+
+
+
+#turns off all lights before we start. 
+for i in range(144):
+    light[i] = (0, 0, 0)
+light.show()
+    
+
+#the following code creates a stimuli (number which matches a button) and a delay (time before stimuli is applied). It runs once before the game starts.
+stimuli = 0
+delay = 0
+def newstimuli():
+    global stimuli
+    global delay
+    global timer
+    timer = 0 
+    randy = random.randint(1, (number_of_buttons-1))
+    stimuli = (stimuli+randy)%number_of_buttons # this the button the player will have to press. It's coded like this to avoid getting the same button twice. 
+    delay = random.randint(2000, 10000) # this the delay before presentation of the new stimuli.
+    print(stimuli, delay, "new stimuli")
+    
+    
+
+#this is the idle animation before any input is registered
+loopsize = 72
+wormlength = 30
+numofloops = 2
+def warmup():
+    global timer
+    global buttons
+    global state
+    timer = timer+ 1
+    cur = timer%loopsize
+    for i in range(0,numofloops):
+        multi = loopsize*i
+        light[cur+multi] = (60, 20, 0)
+        light[cur-wormlength+multi] = (0, 0, 0)
+        if cur-wormlength < 0:
+            light[cur+(loopsize-wormlength)+multi] = (0, 0, 0)
+    light.show()
+
+    for i in range(len(buttons)):
+        current_state = buttons[i].value
+        if current_state != previous_states[i]:
+            if current_state == False:
+                print("Button " + str(i) + " is pressed")
+                state = 1
+                for i in range(143):
+                    light[i] = (0, 0, 0)
+                light.show()
+                timer = 0
+                break
+            else:
+                print("Button " + str(i) + " is released")
+            previous_states[i] = current_state
+        time.sleep(0.005)
+    
+    
+    
+
+#this is the loading animation, which runs once a user presses any key to start. 
+bright = 255
+def loading():
+    global timer
+    global bright
+    global state
+    timer = timer+ 1
+    
+    if timer < 72:
+        time.sleep(0.01)
+        light[timer] = (0, bright, 0)
+        light[143-timer] = (0, bright, 0)
+        light.show()
+    elif bright > 20:
+        bright = bright*0.99
+        for n in range (0,144):
+            light[n] = (0, bright, 0)
+        light.show()
+    else:
+        newstimuli()
+        timer = 0 
+        state = 2
+        bright = 255
+
+
+
+
+#checks for a button press 
+def checkpins():
+    global buttons
+    global state
+    global stimuli
+    global timer
+    global bright
+    for i in range(len(buttons)):
+        current_state = buttons[i].value
+        if current_state != previous_states[i]:
+            if current_state == False:
+                if i == stimuli:
+                    print("CORRECT HIT" + str(i))
+                    timer = 0
+                    bright = 255
+                    for n in range (0,144):
+                        light[n] = (0, bright, 0)
+                    light.show()
+                    state = 6
+                    break
+                else:
+                    print("INCORRECT HIT" + str(i))
+                    timer = 0
+                    bright = 255
+                    for n in range (0,144):
+                        light[n] = (bright, 0,0)
+                    light.show()
+                    state = 5
+                    break
+            previous_states[i] = current_state
+
+
+#on correct response, we flash the lights green 
+def greenflash():
+    global bright
+    global state
+    print(bright, "bright")
+    time.sleep(0.01)
+    bright = bright*0.9
+    if bright > 30:
+        bright = bright*0.99
+        for n in range (0,144):
+            light[n] = (0, bright, 0)
+        light.show()
+    else:
+        for i in range(143):
+            light[i] = (0, 0, 0)
+        light.show()
+        state = 7
+        bright = 255
+        timer = 0
+        
+        
+#on incorrect response, we flash the lights red 
+def redflash():
+    global bright
+    global state
+    print(bright, "bright")
+    time.sleep(0.01)
+    bright = bright*0.9
+    if bright > 30:
+        bright = bright*0.99
+        for n in range (0,144):
+            light[n] = (bright, 0, 0)
+        light.show()
+    else:
+        for i in range(143):
+            light[i] = (0, 0, 0)
+        light.show()
+        state = 7
+        bright = 255
+        timer = 0
+        
+
+
+#this is the game loop:
+ringsize = 12
+while True:
+    #idle animation before any input is registered
+    if state == 0: 
+        warmup()
+    #loading animation (green colour). 
+    elif state == 1: 
+        loading()
+    #select a random stimuli after a random time.
+    elif state == 2: 
+        timer = timer+1
+        if timer > delay:
+            print(stimuli)
+            #keycode.write(str(stimuli))
+            timer = 0
+            time.sleep(0.005)
+            for i in range(143):
+                light[i] = (0, 0, 0)
+            start= stimuli*ringsize
+            print(start, "START!")
+            for i in range(ringsize):
+                light[start+i] = (255, 100, 0)
+            light.show()
+            state = 3
+            if not no_buttons_pressed():
+                state = 5
+    elif state == 3: #countdown (stimuli)
+        timer = timer+speed
+        roundy = math.floor(timer)
+        off = (stimuli*ringsize)-roundy+ringsize
+        light[off] = (0, 0, 0)
+        light.show()
+        checkpins()
+        if roundy > ringsize:
+            state = 4
+            
+    #countdown has run out - sends keypress A to master device
+    elif state == 4: 
+        print("too slow!")
+        redflash()
+        
+        #keycode.write("a")
+    
+    #wrong button is pressed - sends keypress B to master device
+    elif state == 5: 
+        print("wrong button!")
+        #keycode.write("b")
+        redflash()
+    
+    #correct press is registered- sends keypress C to master device
+    elif state == 6: 
+        print("Correct!")
+        greenflash()
+        #keycode.write("c")
+        
+    elif state == 7: #new stimuli
+        timer = 0
+        delay = 0
+        print("state is 7")
+        newstimuli()
+        state = 2
